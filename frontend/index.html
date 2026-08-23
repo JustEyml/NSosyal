@@ -1,845 +1,295 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NSosyal · Şeffaf Moderasyon</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --ink:#13213B;
-    --paper:#EEF1F0;
-    --card:#FFFFFF;
-    --safe:#1B8A5A;
-    --caution:#C4870B;
-    --friction:#B5501C;
-    --block:#8E2340;
-    --line:rgba(19,33,59,0.12);
-    --line-soft:rgba(19,33,59,0.06);
-    --muted:#5B6577;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    background:var(--paper);
-    color:var(--ink);
-    font-family:'Manrope',sans-serif;
-    -webkit-font-smoothing:antialiased;
-    padding:32px 16px 80px;
-  }
-  .wrap{max-width:720px;margin:0 auto;}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  header.top{
-    display:flex;
-    align-items:baseline;
-    justify-content:space-between;
-    margin-bottom:28px;
-    gap:16px;
-    flex-wrap:wrap;
-  }
-  .brand{
-    font-family:'Space Grotesk',sans-serif;
-    font-weight:700;
-    font-size:22px;
-    letter-spacing:-0.01em;
-  }
-  .brand span{color:var(--friction);}
-  .tag{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:11px;
-    color:var(--muted);
-    text-transform:uppercase;
-    letter-spacing:0.08em;
-    border:1px solid var(--line);
-    padding:4px 9px;
-    border-radius:100px;
-    background:var(--card);
-  }
+  <title>NSosyal · Şeffaf Moderasyon</title>
 
-  .architecture{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:11.5px;
-    color:var(--muted);
-    line-height:1.7;
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:12px;
-    padding:16px 18px;
-    margin-bottom:28px;
-  }
-  .architecture b{color:var(--ink);font-weight:600;}
-  .arch-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-  .chip{
-    padding:2px 8px;
-    border-radius:5px;
-    font-weight:500;
-  }
-  .chip.t0{background:rgba(27,138,90,0.12);color:var(--safe);}
-  .chip.t1{background:rgba(196,135,11,0.14);color:var(--caution);}
-  .chip.t2{background:rgba(181,80,28,0.14);color:var(--friction);}
-  .chip.t3{background:rgba(142,35,64,0.13);color:var(--block);}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
 
-  .composer{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:16px;
-    padding:20px;
-    margin-bottom:18px;
-  }
-  .composer-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:12px;
-  }
-  .composer-head h2{
-    font-family:'Space Grotesk',sans-serif;
-    font-size:15px;
-    margin:0;
-    font-weight:600;
-  }
-  .presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
-  .preset-btn{
-    font-family:'Manrope',sans-serif;
-    font-size:12px;
-    padding:6px 11px;
-    border-radius:100px;
-    border:1px solid var(--line);
-    background:var(--paper);
-    color:var(--ink);
-    cursor:pointer;
-    transition:background 0.15s, border-color 0.15s;
-  }
-  .preset-btn:hover{background:#E4E8E6;border-color:rgba(19,33,59,0.22);}
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  >
 
-  textarea{
-    width:100%;
-    min-height:92px;
-    resize:vertical;
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:12px 14px;
-    font-family:'Manrope',sans-serif;
-    font-size:15px;
-    color:var(--ink);
-    background:var(--paper);
-    outline:none;
-  }
-  textarea:focus{border-color:var(--ink);}
-
-  .composer-foot{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-top:12px;
-  }
-  .char-count{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);}
-  .post-btn{
-    font-family:'Space Grotesk',sans-serif;
-    font-weight:600;
-    font-size:14px;
-    padding:10px 20px;
-    border-radius:100px;
-    border:none;
-    background:var(--ink);
-    color:#fff;
-    cursor:pointer;
-    transition:opacity 0.15s;
-  }
-  .post-btn:hover{opacity:0.88;}
-  .post-btn:disabled{opacity:0.5;cursor:default;}
-
-  /* gauge */
-  .gauge-row{display:flex;align-items:center;gap:14px;min-height:22px;margin-top:2px;}
-  .gauge-track{
-    flex:1;
-    height:6px;
-    border-radius:100px;
-    background:var(--line-soft);
-    overflow:hidden;
-    position:relative;
-  }
-  .gauge-fill{
-    height:100%;
-    width:0%;
-    border-radius:100px;
-    background:var(--safe);
-    transition:width 0.45s ease, background 0.45s ease;
-  }
-  .gauge-label{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:11px;
-    color:var(--muted);
-    white-space:nowrap;
-  }
-
-  .loading-line{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:12px;
-    color:var(--muted);
-    padding:8px 0 0;
-  }
-
-  /* verdict panel */
-  .verdict{
-    border-radius:14px;
-    padding:16px 18px;
-    margin-top:14px;
-    border:1px solid transparent;
-    display:none;
-  }
-  .verdict.show{display:block;}
-  .verdict.t1{background:rgba(196,135,11,0.08);border-color:rgba(196,135,11,0.3);}
-  .verdict.t2{background:rgba(181,80,28,0.08);border-color:rgba(181,80,28,0.3);}
-  .verdict.t3{background:rgba(142,35,64,0.08);border-color:rgba(142,35,64,0.3);}
-  .verdict-head{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin-bottom:6px;
-  }
-  .verdict-badge{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:10.5px;
-    text-transform:uppercase;
-    letter-spacing:0.06em;
-    padding:3px 8px;
-    border-radius:5px;
-    font-weight:600;
-  }
-  .verdict.t1 .verdict-badge{background:var(--caution);color:#fff;}
-  .verdict.t2 .verdict-badge{background:var(--friction);color:#fff;}
-  .verdict.t3 .verdict-badge{background:var(--block);color:#fff;}
-  .verdict-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14.5px;}
-  .verdict-reason{font-size:13.5px;color:var(--ink);opacity:0.85;margin:6px 0 12px;line-height:1.5;}
-
-  .rewrite-box{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:12px 14px;
-    font-size:14px;
-    line-height:1.5;
-    margin-bottom:12px;
-  }
-  .rewrite-label{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:10.5px;
-    text-transform:uppercase;
-    letter-spacing:0.06em;
-    color:var(--muted);
-    margin-bottom:6px;
-  }
-
-  .verdict-actions{display:flex;gap:8px;flex-wrap:wrap;}
-  .btn{
-    font-family:'Manrope',sans-serif;
-    font-weight:600;
-    font-size:13px;
-    padding:8px 14px;
-    border-radius:100px;
-    cursor:pointer;
-    border:1px solid transparent;
-  }
-  .btn-primary{background:var(--ink);color:#fff;}
-  .btn-primary:hover{opacity:0.88;}
-  .btn-ghost{background:transparent;border-color:var(--line);color:var(--ink);}
-  .btn-ghost:hover{background:rgba(19,33,59,0.05);}
-  .btn-danger-ghost{background:transparent;border-color:rgba(142,35,64,0.4);color:var(--block);}
-  .btn-danger-ghost:hover{background:rgba(142,35,64,0.06);}
-
-  /* feed */
-  .feed-title{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:11px;
-    text-transform:uppercase;
-    letter-spacing:0.08em;
-    color:var(--muted);
-    margin:26px 0 10px;
-  }
-  .post{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:12px;
-    padding:14px 16px;
-    margin-bottom:10px;
-  }
-  .post-meta{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin-bottom:6px;
-  }
-  .post-tier{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:10px;
-    text-transform:uppercase;
-    padding:2px 7px;
-    border-radius:5px;
-    font-weight:600;
-  }
-  .post-tier.t0{background:rgba(27,138,90,0.12);color:var(--safe);}
-  .post-tier.t1{background:rgba(196,135,11,0.14);color:var(--caution);}
-  .post-tier.t2{background:rgba(181,80,28,0.14);color:var(--friction);}
-  .post-text{font-size:14.5px;line-height:1.5;}
-  .post-when{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);}
-  .empty-feed{
-    font-size:13px;
-    color:var(--muted);
-    padding:14px 0;
-    font-style:italic;
-  }
-
-  @media (max-width:480px){
-    .architecture{font-size:10.5px;}
-  }
-</style>
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+
 <div class="wrap">
 
   <header class="top">
-    
-    <div class="brand">N<span>Sosyal</span> · moderasyon</div>
-    <div class="tag">canlı prototip</div>
+    <div class="brand">
+      N<span>Sosyal</span> · moderasyon
+    </div>
+
+    <div class="tag">
+      canlı prototip
+    </div>
   </header>
 
+
+  <!-- ARCHITECTURE -->
+
   <div class="architecture">
+
     <div class="arch-row">
+
       <b>Boru hattı:</b>
-      <span class="chip t0">Tier 0 — Güvenli</span>
-      <span class="chip t1">Tier 1 — Yumuşak öneri</span>
-      <span class="chip t2">Tier 2 — Emin misin?</span>
-      <span class="chip t3">Tier 3 — Otomatik engel</span>
+
+      <span class="chip t0">
+        Tier 0 — Güvenli
+      </span>
+
+      <span class="chip t1">
+        Tier 1 — Yumuşak öneri
+      </span>
+
+      <span class="chip t2">
+        Tier 2 — Emin misin?
+      </span>
+
+      <span class="chip t3">
+        Tier 3 — Otomatik engel
+      </span>
+
     </div>
-    <div style="margin-top:8px;">
-      Anahtar kelime taraması (normalize edilmiş küfür/hakaret listesi) → anında <b>Tier 3</b> kararı.
-      Geri kalan metin, bağlam ve hedef odaklı taciz/kişisel saldırı tespiti için modele gönderilir → <b>Tier 0–2</b> kararı + yeniden yazım önerisi.
+
+    <div class="architecture-description">
+
+      Anahtar kelime taraması
+      (normalize edilmiş küfür/hakaret listesi)
+      → anında <b>Tier 3</b> kararı.
+
+      Geri kalan metin, bağlam ve hedef odaklı
+      taciz/kişisel saldırı tespiti için modele gönderilir
+      → <b>Tier 0–2</b> kararı + yeniden yazım önerisi.
+
     </div>
+
   </div>
 
-  <!-- USABILITY TEST PARTICIPANT SESSION -->
+
+  <!-- USABILITY TEST -->
+
   <div class="composer" id="testSessionPanel">
-    <div class="composer-head"><h2>Usability Test</h2></div>
-    <div id="participantStart" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-      <input type="text" id="participantIdInput" placeholder="Participant ID (ör. P01)" maxlength="10"
-        style="flex:1;min-width:180px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);font-family:'Manrope',sans-serif;font-size:14px;color:var(--ink);outline:none;">
-      <button class="post-btn" id="startParticipantBtn">Testi Başlat</button>
+
+    <div class="composer-head">
+      <h2>Usability Test</h2>
     </div>
-    <div id="participantActive" style="display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-      <span style="font-size:14px;">Aktif Katılımcı: <strong id="currentParticipant"></strong></span>
-      <button class="preset-btn" id="endParticipantBtn">Testi Bitir</button>
+
+    <div id="participantStart" class="participant-start">
+
+      <input
+        type="text"
+        id="participantIdInput"
+        class="participant-input"
+        placeholder="Participant ID (ör. P01)"
+        maxlength="10"
+      >
+
+      <button
+        class="post-btn"
+        id="startParticipantBtn"
+      >
+        Testi Başlat
+      </button>
+
     </div>
+
+
+    <div
+      id="participantActive"
+      class="participant-active"
+    >
+
+      <span>
+        Aktif Katılımcı:
+        <strong id="currentParticipant"></strong>
+      </span>
+
+      <button
+        class="preset-btn"
+        id="endParticipantBtn"
+      >
+        Testi Bitir
+      </button>
+
+    </div>
+
   </div>
+
+
+  <!-- COMMENT COMPOSER -->
 
   <div class="composer">
+
     <div class="composer-head">
       <h2>Yorum yaz</h2>
     </div>
 
+
     <div class="presets">
-      <button class="preset-btn" data-p="0">Nötr örnek</button>
-      <button class="preset-btn" data-p="1">Siyasi tartışma → kişisel saldırı</button>
-      <button class="preset-btn" data-p="2">Görünüm/beden üzerinden alay</button>
-      <button class="preset-btn" data-p="3">Küfür içeren mesaj</button>
-      <button class="preset-btn" data-p="4">Çalışana yönelik hakaret</button>
+
+      <button class="preset-btn" data-p="0">
+        Nötr örnek
+      </button>
+
+      <button class="preset-btn" data-p="1">
+        Siyasi tartışma → kişisel saldırı
+      </button>
+
+      <button class="preset-btn" data-p="2">
+        Görünüm/beden üzerinden alay
+      </button>
+
+      <button class="preset-btn" data-p="3">
+        Küfür içeren mesaj
+      </button>
+
+      <button class="preset-btn" data-p="4">
+        Çalışana yönelik hakaret
+      </button>
+
     </div>
 
-    <textarea id="input" maxlength="400" placeholder="Bir gönderiye yorum yaz…"></textarea>
+
+    <textarea
+      id="input"
+      maxlength="400"
+      placeholder="Bir gönderiye yorum yaz…"
+    ></textarea>
+
 
     <div class="composer-foot">
-      <span class="char-count" id="charCount">0 / 400</span>
-      <button class="post-btn" id="postBtn">Paylaş</button>
+
+      <span
+        class="char-count"
+        id="charCount"
+      >
+        0 / 400
+      </span>
+
+      <button
+        class="post-btn"
+        id="postBtn"
+      >
+        Paylaş
+      </button>
+
     </div>
+
 
     <div class="gauge-row">
-      <span class="gauge-label" id="gaugeLabel">risk göstergesi</span>
-      <div class="gauge-track"><div class="gauge-fill" id="gaugeFill"></div></div>
-    </div>
-    <div class="loading-line" id="loadingLine" style="display:none;">model değerlendiriyor…</div>
 
-    <div class="verdict" id="verdict">
-      <div class="verdict-head">
-        <span class="verdict-badge" id="vBadge"></span>
-        <span class="verdict-title" id="vTitle"></span>
+      <span
+        class="gauge-label"
+        id="gaugeLabel"
+      >
+        risk göstergesi
+      </span>
+
+      <div class="gauge-track">
+        <div
+          class="gauge-fill"
+          id="gaugeFill"
+        ></div>
       </div>
-      <div class="verdict-reason" id="vReason"></div>
-      <div id="mlInfoLine" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);margin:-4px 0 8px;"></div>
-      <div id="rewriteWrap" style="display:none;">
-        <div class="rewrite-box">
-          <div class="rewrite-label">önerilen yeniden yazım</div>
-          <div id="rewriteText"></div>
-        </div>
-      </div>
-      <div class="verdict-actions" id="vActions"></div>
+
     </div>
+
+
+    <div
+      class="loading-line"
+      id="loadingLine"
+    >
+      model değerlendiriyor…
+    </div>
+
+
+    <!-- MODERATION RESULT -->
+
+    <div
+      class="verdict"
+      id="verdict"
+    >
+
+      <div class="verdict-head">
+
+        <span
+          class="verdict-badge"
+          id="vBadge"
+        ></span>
+
+        <span
+          class="verdict-title"
+          id="vTitle"
+        ></span>
+
+      </div>
+
+
+      <div
+        class="verdict-reason"
+        id="vReason"
+      ></div>
+
+
+      <div
+        id="mlInfoLine"
+        class="ml-info-line"
+      ></div>
+
+
+      <div
+        id="rewriteWrap"
+        class="rewrite-wrap"
+      >
+
+        <div class="rewrite-box">
+
+          <div class="rewrite-label">
+            önerilen yeniden yazım
+          </div>
+
+          <div id="rewriteText"></div>
+
+        </div>
+
+      </div>
+
+
+      <div
+        class="verdict-actions"
+        id="vActions"
+      ></div>
+
+    </div>
+
   </div>
 
-  <div class="feed-title">akış</div>
-  <div id="feed"><div class="empty-feed">Henüz paylaşım yok. Yukarıdan bir yorum dene.</div></div>
+
+  <!-- FEED -->
+
+  <div class="feed-title">
+    akış
+  </div>
+
+  <div id="feed">
+
+    <div class="empty-feed">
+      Henüz paylaşım yok. Yukarıdan bir yorum dene.
+    </div>
+
+  </div>
 
 </div>
 
-<script>
-const LEETSPEAK_MAP = {
-  '0':'o', '1':'i', '3':'e', '4':'a', '5':'s', '7':'t', '8':'b', '9':'g',
-  '@':'a', '$':'s', '!':'i', '+':'t'
-};
 
-// Kaynak: ooguz/turkce-kufur-karaliste (CC-BY-SA 4.0, github.com/ooguz/turkce-kufur-karaliste)
-// 692 kelime/ifade - orijinal listeden asiri genel/tartismali birkac terim
-// (orn. dini kelimeler) yanlis pozitif riski nedeniyle cikarilmistir.
-const KEYWORD_LIST = ["amk", "aq", "ağzına sıçayım", "amarım", "ambiti", "am biti", "amcığı", "amcığın", "amcığını", "amcığınızı", "amcık", "amcık hoşafı", "amcıklama", "amcıklandı", "amcik", "amck", "amckl", "amcklama", "amcklaryla", "amckta", "amcktan", "amcuk", "amık", "amına", "amınako", "amına koy", "amına koyarım", "amına koyayım", "amınakoyim", "amına koyyim", "amına s", "amına sikem", "amına sokam", "amın feryadı", "amını", "amını s", "amın oglu", "amınoğlu", "amın oğlu", "amısına", "amısını", "amina", "amina g", "amina k", "aminako", "aminakoyarim", "amina koyarim", "amina koyayım", "amina koyayim", "aminakoyim", "aminda", "amindan", "amindayken", "amini", "aminiyarraaniskiim", "aminoglu", "amin oglu", "amiyum", "amkafa", "amk çocuğu", "amlarnzn", "amlı", "ammak", "ammna", "amna", "amnda", "amndaki", "amngtn", "amnn", "amona", "amsız", "amsiz", "amsz", "amteri", "amugaa", "amuğa", "amuna", "anaaann", "anal", "analarn", "anam", "anamla", "anan", "anana", "anandan", "ananı", "ananı", "ananın", "ananın am", "ananın amı", "ananın dölü", "ananınki", "ananısikerim", "ananı sikerim", "ananısikeyim", "ananı sikeyim", "ananızın", "ananızın am", "anani", "ananin", "ananisikerim", "anani sikerim", "ananisikeyim", "anani sikeyim", "anann", "ananz", "anas", "anasını", "anasının am", "anası orospu", "anasi", "anasinin", "anay", "anayin", "anneni", "annenin", "annesiz", "anuna", "a.q.", "atkafası", "atmık", "attırdığım", "attrrm", "auzlu", "avrat", "ayklarmalrmsikerim", "azdım", "azdır", "azdırıcı", "babaannesi kaşar", "babanı", "babanın", "babani", "babası pezevenk", "bacağına sıçayım", "bacına", "bacını", "bacının", "bacini", "bacn", "bacndan", "bacy", "bastard", "basur", "bızır", "bitch", "biting", "boka", "bokbok", "bokça", "bokhu", "bokkkumu", "boklar", "boktan", "boku", "bokubokuna", "bokum", "bombok", "boner", "bosalmak", "boşalmak", "cenabet", "cibiliyetsiz", "cibilliyetini", "cibilliyetsiz", "cikar", "dalaksız", "dallama", "daltassak", "dalyarak", "dalyarrak", "dassagi", "diktim", "dildo", "dingil", "dingilini", "dinsiz", "dkerim", "domal", "domalan", "domaldı", "domaldın", "domalık", "domalıyor", "domalmak", "domalmış", "domalsın", "domalt", "domaltarak", "domaltıp", "domaltır", "domaltırım", "domaltip", "domaltmak", "dölü", "dönek", "düdük", "eben", "ebeni", "ebenin", "ebeninki", "ecdadını", "ecdadini", "fahise", "fahişe", "feriştah", "ferre", "fuck", "fucker", "fuckin", "fucking", "gavad", "gavat", "geber", "geberik", "gebermek", "gebermiş", "gebertir", "gerızekalı", "giberim", "giberler", "gibis", "gibiş", "gibmek", "gibtiler", "goddamn", "godoş", "godumun", "gotelek", "gotlalesi", "gotlu", "gotten", "gotundeki", "gotunden", "gotune", "gotunu", "gotveren", "goyiim", "goyum", "goyuyim", "goyyim", "göt deliği", "götelek", "göt herif", "götlalesi", "götlek", "götoğlanı", "göt oğlanı", "götoş", "götten", "götü", "götün", "götüne", "götünekoyim", "götüne koyim", "götünü", "götveren", "göt veren", "göt verir", "gtelek", "gtnde", "gtnden", "gtne", "gtten", "gtveren", "hasiktir", "hassikome", "hassiktir", "has siktir", "hassittir", "haysiyetsiz", "hayvan herif", "hoşafı", "hsktr", "huur", "ıbnelık", "ibina", "ibine", "ibinenin", "ibne", "ibnedir", "ibneleri", "ibnelik", "ibnelri", "ibneni", "ibnenin", "ibnerator", "ibnesi", "imansz", "ipne", "iserim", "işerim", "itoğlu it", "kafam girsin", "kahpe", "kahpenin", "kahpenin feryadı", "kaka", "kaltak", "kancık", "kancik", "kappe", "karhane", "kaşar", "kavat", "kavatn", "kaypak", "kayyum", "kerane", "kerhane", "kerhanelerde", "kevase", "kevaşe", "kevvase", "koca göt", "koduğmun", "koduğmunun", "kodumun", "kodumunun", "koduumun", "koyarm", "koyayım", "koyiim", "koyiiym", "koyim", "koyum", "koyyim", "krar", "kukudaym", "laciye boyadım", "lavuk", "liboş", "madafaka", "malafat", "malak", "mcik", "meme", "memelerini", "mezveleli", "minaamcık", "mincikliyim", "monakkoluyum", "motherfucker", "mudik", "ocuu", "ocuun", "o. çocuğu", "oğlan", "oğlancı", "oğlu it", "orosbucocuu", "orospu", "orospucocugu", "orospu cocugu", "orospu çoc", "orospuçocuğu", "orospu çocuğu", "orospu çocuğudur", "orospu çocukları", "orospudur", "orospular", "orospunun", "orospunun evladı", "orospuydu", "orospuyuz", "orostoban", "orostopol", "orrospu", "oruspu", "oruspuçocuğu", "oruspu çocuğu", "osbir", "ossurduum", "ossurmak", "ossuruk", "osur", "osurduu", "osuruk", "osururum", "otuzbir", "öşex", "patlak zar", "penis", "pezevek", "pezeven", "pezeveng", "pezevengi", "pezevengin evladı", "pezevenk", "pezo", "pici", "picler", "piçin oğlu", "piç kurusu", "piçler", "pipi", "pipiş", "pisliktir", "porno", "pussy", "puşt", "puşttur", "rahminde", "revizyonist", "s1kerim", "s1kerm", "s1krm", "sakso", "saksofon", "salaak", "saxo", "sekis", "serefsiz", "sevgi koyarım", "sevişelim", "sexs", "sıçarım", "sıçtığım", "sıecem", "sicarsin", "sikdi", "sikdiğim", "sike", "sikecem", "sikem", "siken", "sikenin", "siker", "sikerim", "sikerler", "sikersin", "sikertir", "sikertmek", "sikesen", "sikesicenin", "sikey", "sikeydim", "sikeyim", "sikeym", "siki", "sikicem", "sikici", "sikien", "sikienler", "sikiiim", "sikiiimmm", "sikiim", "sikiir", "sikiirken", "sikik", "sikil", "sikildiini", "sikilesice", "sikilmi", "sikilmie", "sikilmis", "sikilmiş", "sikilsin", "sikim", "sikimde", "sikimden", "sikime", "sikimi", "sikimiin", "sikimin", "sikimle", "sikimsonik", "sikimtrak", "sikin", "sikinde", "sikinden", "sikine", "sikini", "sikip", "sikis", "sikisek", "sikisen", "sikish", "sikismis", "sikiş", "sikişen", "sikişme", "sikitiin", "sikiyim", "sikiym", "sikiyorum", "sikkim", "sikko", "sikleri", "sikleriii", "sikli", "sikm", "sikmek", "sikmem", "sikmiler", "sikmisligim", "siksem", "sikseydin", "sikseyidin", "siksin", "siksinbaya", "siksinler", "siksiz", "siksok", "siksz", "sikt", "sikti", "siktigimin", "siktigiminin", "siktiğim", "siktiğimin", "siktiğiminin", "siktii", "siktiim", "siktiimin", "siktiiminin", "siktiler", "siktim", "siktim", "siktimin", "siktiminin", "siktir", "siktir et", "siktirgit", "siktir git", "siktirir", "siktiririm", "siktiriyor", "siktir lan", "siktirolgit", "siktir ol git", "sittimin", "sittir", "skcem", "skecem", "skem", "sker", "skerim", "skerm", "skeyim", "skiim", "skik", "skim", "skime", "skmek", "sksin", "sksn", "sksz", "sktiimin", "sktrr", "skyim", "slaleni", "sokam", "sokarım", "sokarim", "sokarm", "sokarmkoduumun", "sokayım", "sokaym", "sokiim", "soktuğumunun", "sokuk", "sokum", "sokuş", "sokuyum", "soxum", "sulaleni", "sülaleni", "sülalenizi", "sürtük", "şerefsiz", "şıllık", "taaklarn", "taaklarna", "tarrakimin", "tasak", "tassak", "taşak", "taşşak", "tipini s.k", "tipinizi s.keyim", "tiyniyat", "toplarm", "topsun", "totoş", "vajina", "vajinanı", "veled", "veledizina", "veled i zina", "verdiimin", "weled", "weledizina", "whore", "xikeyim", "yaaraaa", "yalama", "yalarım", "yalarun", "yaraaam", "yarak", "yaraksız", "yaraktr", "yaram", "yaraminbasi", "yaramn", "yararmorospunun", "yarra", "yarraaaa", "yarraak", "yarraam", "yarraamı", "yarragi", "yarragimi", "yarragina", "yarragindan", "yarragm", "yarrağ", "yarrağım", "yarrağımı", "yarraimin", "yarrak", "yarram", "yarramin", "yarraminbaşı", "yarramn", "yarran", "yarrana", "yarrrak", "yavak", "yavş", "yavşak", "yavşaktır", "yavuşak", "yılışık", "yilisik", "yogurtlayam", "yoğurtlayam", "yrrak", "zıkkımım", "zibidi", "zigsin", "zikeyim", "zikiiim", "zikiim", "zikik", "zikim", "ziksiiin", "ziksiin", "zulliyetini", "zviyetini"];
+<script src="app.js"></script>
 
-function normalize(text){
-  let t = text.toLocaleLowerCase('tr');
-  t = t.split('').map(ch => LEETSPEAK_MAP[ch] || ch).join('');  // leetspeak temizle (a m k -> amk, s1kt1r -> siktir)
-  t = t.replace(/[i̇]/g,'i');
-  t = t.replace(/[^a-zçğıöşü0-9\s]/g,'');
-  t = t.replace(/(.)\1{2,}/g,'$1$1');   // "aaaamk" -> "aamk" gibi tekrarlari sadeleştir
-  t = t.replace(/\s+/g,' ').trim();
-  return t;
-}
-
-
-function hitsKeywordList(text){
-  const norm = normalize(text);                 // bosluklu, temiz metin
-  const words = norm.split(' ').filter(Boolean); // kelime kelime liste
-
-  // SADECE art arda gelen TEK HARFLERI birlestir (gercek kacis denemesi: "a m k" -> "amk")
-  // farkli gercek kelimeleri birbirine yapistirmaz, bu yuzden "beğendim emeğine" gibi
-  // masum ikilileri yanlislikla "meF2me" gibi bir kelimeye donusturmez
-  const merged = [];
-  let buffer = '';
-  for (const w of words) {
-    if (w.length === 1) {
-      buffer += w;
-    } else {
-      if (buffer) { merged.push(buffer); buffer = ''; }
-      merged.push(w);
-    }
-  }
-  if (buffer) merged.push(buffer);
-
-  const allWords = [...words, ...merged];
-
-  return KEYWORD_LIST.some(entry => {
-    const entryNorm = normalize(entry);
-    const isPhrase = entryNorm.includes(' ');
-
-    if (isPhrase) {
-      // coklu kelime ifadeler: normal bosluklu metin icinde ifade olarak ara
-      return norm.includes(entryNorm);
-    }
-
-    // tek kelimelik girdiler: SADECE kelime sinirinda eslesme (alt-dize olarak degil)
-    const entrySquashed = entryNorm.replace(/\s/g,'');
-    return allWords.some(w => w === entrySquashed || w.startsWith(entrySquashed));
-  });
-}
-
-const presets = {
-  "0": "Bu konudaki fikrine katılmıyorum ama güzel bir yazı olmuş, teşekkürler.",
-  "1": "Bu konuda tamamen yanılıyorsun, üstelik senin gibi bir şeyi anlamayan biriyle tartışmak zaman kaybı.",
-  "2": "Bu fotoğrafta bu kadar kilo almış birini görmek gerçekten çok kötü olmuş, hiç böyle paylaşmamalıydın.",
-  "3": "Bu yazıyı yazan amk salak mısın sen ya siktir git buradan.",
-  "4": "Bu mağazadaki o çalışan resmen bir şey işini bile beceremiyor, öyle bir yetersiz ki insan hayrete düşüyor."
-};
-
-document.querySelectorAll('.preset-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    input.value = presets[btn.dataset.p];
-    updateCount();
-    input.focus();
-  });
-});
-
-const input = document.getElementById('input');
-const charCount = document.getElementById('charCount');
-const postBtn = document.getElementById('postBtn');
-const gaugeFill = document.getElementById('gaugeFill');
-const gaugeLabel = document.getElementById('gaugeLabel');
-const loadingLine = document.getElementById('loadingLine');
-const verdict = document.getElementById('verdict');
-const vBadge = document.getElementById('vBadge');
-const vTitle = document.getElementById('vTitle');
-const vReason = document.getElementById('vReason');
-const rewriteWrap = document.getElementById('rewriteWrap');
-const rewriteText = document.getElementById('rewriteText');
-const vActions = document.getElementById('vActions');
-const feed = document.getElementById('feed');
-
-const participantIdInput = document.getElementById('participantIdInput');
-const startParticipantBtn = document.getElementById('startParticipantBtn');
-const endParticipantBtn = document.getElementById('endParticipantBtn');
-const participantStart = document.getElementById('participantStart');
-const participantActive = document.getElementById('participantActive');
-const currentParticipant = document.getElementById('currentParticipant');
-
-function updateParticipantUI(){
-  const participantId = sessionStorage.getItem('participant_id');
-  if(participantId){
-    participantStart.style.display = 'none';
-    participantActive.style.display = 'flex';
-    currentParticipant.textContent = participantId;
-  } else {
-    participantStart.style.display = 'flex';
-    participantActive.style.display = 'none';
-    currentParticipant.textContent = '';
-  }
-}
-
-startParticipantBtn.addEventListener('click', ()=>{
-  const participantId = participantIdInput.value.trim().toUpperCase();
-  if(!participantId){
-    alert('Lütfen Participant ID girin (ör. P01).');
-    return;
-  }
-  sessionStorage.setItem('participant_id', participantId);
-  participantIdInput.value = '';
-  updateParticipantUI();
-});
-
-endParticipantBtn.addEventListener('click', ()=>{
-  sessionStorage.removeItem('participant_id');
-  resetAll();
-  updateParticipantUI();
-});
-
-updateParticipantUI();
-
-let currentLogId = null;
-
-function updateCount(){
-  charCount.textContent = input.value.length + ' / 400';
-}
-input.addEventListener('input', updateCount);
-
-function resetGauge(){
-  gaugeFill.style.width = '0%';
-  gaugeFill.style.background = 'var(--safe)';
-  gaugeLabel.textContent = 'risk göstergesi';
-}
-
-function setGauge(tier){
-  const map = {
-    0:{w:'8%',c:'var(--safe)',l:'güvenli'},
-    1:{w:'40%',c:'var(--caution)',l:'sınırda'},
-    2:{w:'72%',c:'var(--friction)',l:'yüksek risk'},
-    3:{w:'100%',c:'var(--block)',l:'engellendi'}
-  };
-  const m = map[tier];
-  gaugeFill.style.width = m.w;
-  gaugeFill.style.background = m.c;
-  gaugeLabel.textContent = m.l;
-}
-
-function clearVerdict(){
-  verdict.className = 'verdict';
-  vActions.innerHTML = '';
-  rewriteWrap.style.display = 'none';
-  document.getElementById('mlInfoLine').textContent = '';
-}
-
-function showMlInfo(result){
-  const el = document.getElementById('mlInfoLine');
-  if (result.ml_tier === null || result.ml_tier === undefined) {
-    el.textContent = '';
-    return;
-  }
-  const isimler = {0:'temiz', 1:'saldırgan', 2:'nefret'};
-  const kimKarar = result.decided_by === 'ml' ? 'ML modeli karar verdi' : 'LLM karar verdi (ML LLM ile desteklendi)';
-  el.textContent = `ML tahmini: ${isimler[result.ml_tier]} (%${(result.ml_confidence*100).toFixed(1)} güven) — ${kimKarar}`;
-}
-
-function addToFeed(text, tier){
-  const empty = feed.querySelector('.empty-feed');
-  if(empty) empty.remove();
-  const tierNames = {0:'Tier 0',1:'Tier 1',2:'Tier 2'};
-  const el = document.createElement('div');
-  el.className = 'post';
-  el.innerHTML = `
-    <div class="post-meta">
-      <span class="post-tier t${tier}">${tierNames[tier]}</span>
-      <span class="post-when">şimdi</span>
-    </div>
-    <div class="post-text"></div>
-  `;
-  el.querySelector('.post-text').textContent = text;
-  feed.prepend(el);
-}
-
-/* ============================================================
-   AI_CONFIG — HANGİ API'Yİ KULLANACAKSANIZ SADECE BURAYI DOLDURUN
-   ============================================================
-   Aşağıda iki örnek var: Google Gemini (ücretsiz katmanı var) ve
-   OpenAI-uyumlu API'ler (OpenRouter, Groq, vb. çoğu ücretsiz sağlar).
-   Kullanmak istediğiniz birinin yorumunu kaldırın (// işaretlerini silin),
-   diğerini yorum satırı yapın (başına // koyun), API_KEY'i kendi
-   anahtarınızla değiştirin.
-   ============================================================ */
-
-const SYSTEM_PROMPT = `Sen NSosyal platformu için bir içerik moderasyon sınıflandırıcısısın. Sana bir Türkçe yorum verilecek. Görevin:
-1) Yorumun taciz, kişiye yönelik saldırı, beden/görünüm üzerinden aşağılama veya hedefli hakaret içerip içermediğini değerlendirmek.
-2) Bunu üç seviyeden birine atamak:
-   - tier 0: sorun yok, doğrudan paylaşılabilir.
-   - tier 1: sınırda/gergin dil var ama açık taciz değil (yumuşak öneri gösterilecek, kullanıcı yine de paylaşabilir).
-   - tier 2: açık taciz/hedefli saldırı/aşağılama var ama küfür kelime listesi tetiklenmedi (kullanıcıya "emin misin" onayı sorulacak).
-3) Kısa, tarafsız bir gerekçe yaz (tek cümle, Türkçe).
-4) Aynı fikri/eleştiriyi koruyan ama saldırgan/aşağılayıcı kısmı çıkaran bir yeniden yazım öner (tier 0 ise rewrite'ı orijinal metinle aynı bırak).
-
-SADECE şu JSON formatında yanıt ver, başka hiçbir şey yazma, markdown kod bloğu kullanma:
-{"tier": 0, "reason": "...", "rewrite": "..."}`;
-
-async function callModel(text, isTier3){
-  const response = await fetch("http://localhost:3000/api/moderate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      text,
-      isTier3: !!isTier3,
-      participant_id: sessionStorage.getItem('participant_id')
-    })
-  });
-  if (!response.ok) {
-    throw new Error("Sunucudan hata döndü: " + response.status);
-  }
-  return await response.json();
-}
-
-async function logUserAction(action, publishedText = null) {
-  if (!currentLogId) return;
-
-  try {
-    await fetch("http://localhost:3000/api/moderation-action", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        log_id: currentLogId,
-        action: action,
-        published_text: publishedText
-      })
-    });
-  } catch (e) {
-    console.error("Action log kaydedilemedi:", e);
-  }
-}
-
-function renderVerdict(tier, reason, rewrite, originalText, opts){
-  opts = opts || {};
-  clearVerdict();
-  verdict.classList.add('show');
-
-  if(tier === 3){
-    verdict.classList.add('t3');
-    vBadge.textContent = 'Tier 3 · Engellendi';
-    vTitle.textContent = 'Bu yorum otomatik olarak engellendi';
-    vReason.textContent = reason;
-    rewriteWrap.style.display = rewrite ? 'block' : 'none';
-    if(rewrite) rewriteText.textContent = rewrite;
-
-    if (rewrite) {
-      const useBtn = document.createElement('button');
-      useBtn.className = 'btn btn-primary';
-      useBtn.textContent = 'Öneriyi kullan ve paylaş';
-      useBtn.onclick = async () => {
-        await logUserAction('rewrite_used', rewrite);
-        addToFeed(rewrite, 0);
-        resetAll();
-      };
-      vActions.appendChild(useBtn);
-    }
-    const abandonBtn = document.createElement('button');
-    abandonBtn.className = 'btn btn-ghost';
-    abandonBtn.textContent = 'Vazgeç';
-    abandonBtn.onclick = async () => {
-      await logUserAction('abandoned', null);
-      resetAll();
-    };
-
-    const editBtn = document.createElement('button');
-    editBtn.className = 'btn btn-ghost';
-    editBtn.textContent = 'Düzenlemeye devam et';
-    editBtn.onclick = async () => {
-      await logUserAction('edit_selected');
-      clearVerdict();
-      resetGauge();
-    };
-    vActions.appendChild(editBtn);
-  }
-
-  else if(tier === 2){
-    verdict.classList.add('t2');
-    vBadge.textContent = 'Tier 2 · Onay gerekli';
-    vTitle.textContent = 'Bu yorum hedefli bir saldırı gibi görünüyor';
-    vReason.textContent = reason;
-    rewriteWrap.style.display = 'block';
-    rewriteText.textContent = rewrite;
-
-    const useBtn = document.createElement('button');
-    useBtn.className = 'btn btn-primary';
-    useBtn.textContent = 'Öneriyi kullan ve paylaş';
-    useBtn.onclick = async () => {
-      await logUserAction('rewrite_used', rewrite);
-      addToFeed(rewrite, 0);
-      resetAll();
-    };
-
-    const anywayBtn = document.createElement('button');
-    anywayBtn.className = 'btn btn-danger-ghost';
-    anywayBtn.textContent = 'Evet, yine de paylaş';
-    anywayBtn.onclick = async () => {
-      await logUserAction('original_posted', originalText);
-      addToFeed(originalText, 2);
-      resetAll();
-    };
-
-    const abandonBtn = document.createElement('button');
-    abandonBtn.className = 'btn btn-ghost';
-    abandonBtn.textContent = 'Vazgeç';
-    abandonBtn.onclick = async () => {
-      await logUserAction('abandoned', null);
-      resetAll();
-    };
-
-    const editBtn = document.createElement('button');
-    editBtn.className = 'btn btn-ghost';
-    editBtn.textContent = 'Düzenle';
-    editBtn.onclick = async () => {
-      await logUserAction('edit_selected');
-      clearVerdict();
-      resetGauge();
-    };
-
-    vActions.appendChild(useBtn);
-    vActions.appendChild(anywayBtn);
-    vActions.appendChild(abandonBtn);
-    vActions.appendChild(editBtn);
-  }
-
-  else if(tier === 1){
-    verdict.classList.add('t1');
-    vBadge.textContent = 'Tier 1 · Öneri';
-    vTitle.textContent = 'Dilini yumuşatmak ister misin?';
-    vReason.textContent = reason;
-    rewriteWrap.style.display = 'block';
-    rewriteText.textContent = rewrite;
-
-    const useBtn = document.createElement('button');
-    useBtn.className = 'btn btn-primary';
-    useBtn.textContent = 'Öneriyi kullan ve paylaş';
-    useBtn.onclick = async () => {
-      await logUserAction('rewrite_used', rewrite);
-      addToFeed(rewrite, 0);
-      resetAll();
-    };
-
-    const anywayBtn = document.createElement('button');
-    anywayBtn.className = 'btn btn-ghost';
-    anywayBtn.textContent = 'Orijinaliyle paylaş';
-    anywayBtn.onclick = async () => {
-      await logUserAction('original_posted', originalText);
-      addToFeed(originalText, 1);
-      resetAll();
-    };
-    const abandonBtn = document.createElement('button');
-    abandonBtn.className = 'btn btn-ghost';
-    abandonBtn.textContent = 'Vazgeç';
-    abandonBtn.onclick = async () => {
-      await logUserAction('abandoned', null);
-      resetAll();
-    };
-    const editBtn = document.createElement('button');
-    editBtn.className = 'btn btn-ghost';
-    editBtn.textContent = 'Düzenle';
-    editBtn.onclick = async () => {
-      await logUserAction('edit_selected');
-      clearVerdict();
-      resetGauge();
-    };
-
-    vActions.appendChild(useBtn);
-    vActions.appendChild(anywayBtn);
-    vActions.appendChild(abandonBtn);
-    vActions.appendChild(editBtn);
-
-  }
-}
-function resetAll(){
-  input.value = '';
-  updateCount();
-  clearVerdict();
-  resetGauge();
-  currentLogId = null;
-  postBtn.disabled = false;
-  postBtn.textContent = 'Paylaş';
-  loadingLine.style.display = 'none';
-}
-
-postBtn.addEventListener('click', async ()=>{
-  const participantId = sessionStorage.getItem('participant_id');
-  if(!participantId){
-    alert('Önce Participant ID girerek testi başlatın.');
-    participantIdInput.focus();
-    return;
-  }
-
-  const text = input.value.trim();
-  if(!text) return;
-
-  clearVerdict();
-  postBtn.disabled = true;
-  postBtn.textContent = '…';
-
-  // Tier 3 check — local, instant, no API needed for the decision itself
-  if(hitsKeywordList(text)){
-    setGauge(3);
-    postBtn.disabled = false;
-    postBtn.textContent = 'Paylaş';
-    // still call the model to get a clean rewrite suggestion
-    loadingLine.style.display = 'block';
-    loadingLine.textContent = 'engellendi — alternatif ifade öneriliyor…';
-    try{
-      const result = await callModel(text, true);
-      currentLogId = result.log_id;
-      loadingLine.style.display = 'none';
-      renderVerdict(3, 'Bu yorum, platformda otomatik olarak engellenen kelime/ifade listesindeki bir terim içeriyor.', result.rewrite, text);
-    }catch(e){
-      loadingLine.style.display = 'none';
-      renderVerdict(3, 'Bu yorum, platformda otomatik olarak engellenen kelime/ifade listesindeki bir terim içeriyor.', null, text);
-    }
-    return;
-  }
-
-  // Tier 0-2 — model call
-  loadingLine.style.display = 'block';
-  loadingLine.textContent = 'model değerlendiriyor…';
-  try{
-    const result = await callModel(text);
-    currentLogId = result.log_id;
-    loadingLine.style.display = 'none';
-    setGauge(result.tier);
-    postBtn.disabled = false;
-    postBtn.textContent = 'Paylaş';
-
-    if(result.tier === 0){
-      await logUserAction('direct_posted', text);
-      addToFeed(text, 0);
-      resetAll();
-    } else {
-      renderVerdict(result.tier, result.reason, result.rewrite, text);
-      showMlInfo(result);
-    }
-  }catch(e){
-    loadingLine.style.display = 'none';
-    postBtn.disabled = false;
-    postBtn.textContent = 'Paylaş';
-    loadingLine.style.display = 'block';
-    loadingLine.textContent = 'model çağrısı başarısız oldu, tekrar dene.';
-    setTimeout(()=>{ loadingLine.style.display = 'none'; }, 2500);
-  }
-});
-</script>
 </body>
 </html>
