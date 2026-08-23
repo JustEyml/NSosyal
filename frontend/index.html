@@ -300,6 +300,7 @@
 <div class="wrap">
 
   <header class="top">
+    
     <div class="brand">N<span>Sosyal</span> · moderasyon</div>
     <div class="tag">canlı prototip</div>
   </header>
@@ -315,6 +316,20 @@
     <div style="margin-top:8px;">
       Anahtar kelime taraması (normalize edilmiş küfür/hakaret listesi) → anında <b>Tier 3</b> kararı.
       Geri kalan metin, bağlam ve hedef odaklı taciz/kişisel saldırı tespiti için modele gönderilir → <b>Tier 0–2</b> kararı + yeniden yazım önerisi.
+    </div>
+  </div>
+
+  <!-- USABILITY TEST PARTICIPANT SESSION -->
+  <div class="composer" id="testSessionPanel">
+    <div class="composer-head"><h2>Usability Test</h2></div>
+    <div id="participantStart" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <input type="text" id="participantIdInput" placeholder="Participant ID (ör. P01)" maxlength="10"
+        style="flex:1;min-width:180px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);font-family:'Manrope',sans-serif;font-size:14px;color:var(--ink);outline:none;">
+      <button class="post-btn" id="startParticipantBtn">Testi Başlat</button>
+    </div>
+    <div id="participantActive" style="display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <span style="font-size:14px;">Aktif Katılımcı: <strong id="currentParticipant"></strong></span>
+      <button class="preset-btn" id="endParticipantBtn">Testi Bitir</button>
     </div>
   </div>
 
@@ -387,6 +402,7 @@ function normalize(text){
   return t;
 }
 
+
 function hitsKeywordList(text){
   const norm = normalize(text);                 // bosluklu, temiz metin
   const words = norm.split(' ').filter(Boolean); // kelime kelime liste
@@ -453,6 +469,45 @@ const rewriteWrap = document.getElementById('rewriteWrap');
 const rewriteText = document.getElementById('rewriteText');
 const vActions = document.getElementById('vActions');
 const feed = document.getElementById('feed');
+
+const participantIdInput = document.getElementById('participantIdInput');
+const startParticipantBtn = document.getElementById('startParticipantBtn');
+const endParticipantBtn = document.getElementById('endParticipantBtn');
+const participantStart = document.getElementById('participantStart');
+const participantActive = document.getElementById('participantActive');
+const currentParticipant = document.getElementById('currentParticipant');
+
+function updateParticipantUI(){
+  const participantId = sessionStorage.getItem('participant_id');
+  if(participantId){
+    participantStart.style.display = 'none';
+    participantActive.style.display = 'flex';
+    currentParticipant.textContent = participantId;
+  } else {
+    participantStart.style.display = 'flex';
+    participantActive.style.display = 'none';
+    currentParticipant.textContent = '';
+  }
+}
+
+startParticipantBtn.addEventListener('click', ()=>{
+  const participantId = participantIdInput.value.trim().toUpperCase();
+  if(!participantId){
+    alert('Lütfen Participant ID girin (ör. P01).');
+    return;
+  }
+  sessionStorage.setItem('participant_id', participantId);
+  participantIdInput.value = '';
+  updateParticipantUI();
+});
+
+endParticipantBtn.addEventListener('click', ()=>{
+  sessionStorage.removeItem('participant_id');
+  resetAll();
+  updateParticipantUI();
+});
+
+updateParticipantUI();
 
 let currentLogId = null;
 
@@ -541,7 +596,11 @@ async function callModel(text, isTier3){
   const response = await fetch("http://localhost:3000/api/moderate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, isTier3: !!isTier3 })
+    body: JSON.stringify({
+      text,
+      isTier3: !!isTier3,
+      participant_id: sessionStorage.getItem('participant_id')
+    })
   });
   if (!response.ok) {
     throw new Error("Sunucudan hata döndü: " + response.status);
@@ -591,6 +650,13 @@ function renderVerdict(tier, reason, rewrite, originalText, opts){
       };
       vActions.appendChild(useBtn);
     }
+    const abandonBtn = document.createElement('button');
+    abandonBtn.className = 'btn btn-ghost';
+    abandonBtn.textContent = 'Vazgeç';
+    abandonBtn.onclick = async () => {
+      await logUserAction('abandoned', null);
+      resetAll();
+    };
 
     const editBtn = document.createElement('button');
     editBtn.className = 'btn btn-ghost';
@@ -629,6 +695,14 @@ function renderVerdict(tier, reason, rewrite, originalText, opts){
       resetAll();
     };
 
+    const abandonBtn = document.createElement('button');
+    abandonBtn.className = 'btn btn-ghost';
+    abandonBtn.textContent = 'Vazgeç';
+    abandonBtn.onclick = async () => {
+      await logUserAction('abandoned', null);
+      resetAll();
+    };
+
     const editBtn = document.createElement('button');
     editBtn.className = 'btn btn-ghost';
     editBtn.textContent = 'Düzenle';
@@ -640,6 +714,7 @@ function renderVerdict(tier, reason, rewrite, originalText, opts){
 
     vActions.appendChild(useBtn);
     vActions.appendChild(anywayBtn);
+    vActions.appendChild(abandonBtn);
     vActions.appendChild(editBtn);
   }
 
@@ -668,9 +743,27 @@ function renderVerdict(tier, reason, rewrite, originalText, opts){
       addToFeed(originalText, 1);
       resetAll();
     };
+    const abandonBtn = document.createElement('button');
+    abandonBtn.className = 'btn btn-ghost';
+    abandonBtn.textContent = 'Vazgeç';
+    abandonBtn.onclick = async () => {
+      await logUserAction('abandoned', null);
+      resetAll();
+    };
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-ghost';
+    editBtn.textContent = 'Düzenle';
+    editBtn.onclick = async () => {
+      await logUserAction('edit_selected');
+      clearVerdict();
+      resetGauge();
+    };
 
     vActions.appendChild(useBtn);
     vActions.appendChild(anywayBtn);
+    vActions.appendChild(abandonBtn);
+    vActions.appendChild(editBtn);
+
   }
 }
 function resetAll(){
@@ -685,6 +778,13 @@ function resetAll(){
 }
 
 postBtn.addEventListener('click', async ()=>{
+  const participantId = sessionStorage.getItem('participant_id');
+  if(!participantId){
+    alert('Önce Participant ID girerek testi başlatın.');
+    participantIdInput.focus();
+    return;
+  }
+
   const text = input.value.trim();
   if(!text) return;
 

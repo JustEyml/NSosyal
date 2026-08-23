@@ -30,36 +30,80 @@ const API_KEY = process.env.GEMINI_API_KEY;
 const CONFIDENCE_THRESHOLD = 0.85;
 
 // Moderation prompt - TAM KARAR (ML belirsiz kaldiginda kullanilir)
-const FULL_DECISION_PROMPT = `Sen NSosyal platformu için bir içerik moderasyon sınıflandırıcısısın. Sana bir Türkçe yorum verilecek.
+const FULL_DECISION_PROMPT = `Sen NSosyal platformu için bir Türkçe içerik moderasyon sınıflandırıcısısın.
+
+Sana bir Türkçe yorum verilecek.
+
+Yorumu aşağıdaki sınıflandırma sistemine göre değerlendir:
+
+TIER 0 — HİÇBİRİ / NORMAL
+- Zararlı veya saldırgan içerik yoktur.
+- Normal fikir ayrılığı, eleştiri veya olumsuz görüş bu sınıfa girer.
+- Bir fikri, ürünü, projeyi veya performansı eleştirmek tek başına saldırganlık değildir.
+
+Örnek:
+"Bu fikre katılmıyorum."
+"Bu sunumu başarılı bulmadım."
+
+TIER 1 — SALDIRGAN / OFFENSIVE
+- Bir kişiye yönelik hakaret, küçümseme, aşağılama veya saldırgan dil vardır.
+- Kişinin zekası, yeteneği, görünüşü veya kişisel özellikleri hedef alınabilir.
+- Ancak saldırı bir gruba veya korunan kimliğe yönelik nefret söylemi değildir.
+
+Örnek:
+"Sen hiçbir şeyden anlamıyorsun."
+"Bu işi yapabilecek kapasitede değilsin."
+"Kendini zeki sanıyorsun ama değilsin."
+
+TIER 2 — NEFRET SÖYLEMİ / HATE SPEECH
+- Bir kişi veya grup; ırk, etnik köken, milliyet, din, cinsiyet veya benzeri kimlik/grup özellikleri üzerinden hedef alınmaktadır.
+- İçerik bu gruba karşı aşağılama, düşmanlık, nefret veya ayrımcı ifade içermektedir.
+- Sadece kişisel hakaret olması Tier 2 için yeterli değildir.
+
+ÖNEMLİ:
+Tier 1 ile Tier 2'yi karıştırma.
+Bir kişiye yönelik sıradan hakaret veya aşağılama = Tier 1.
+Bir gruba/kimliğe yönelik nefret veya ayrımcı saldırı = Tier 2.
 
 Görevin:
-1) Yorumun taciz, kişiye yönelik saldırı, beden/görünüm üzerinden aşağılama veya hedefli hakaret içerip içermediğini değerlendirmek.
-2) Yorumu üç seviyeden birine ata:
-   - tier 0: sorun yok, doğrudan paylaşılabilir.
-   - tier 1: sınırda/gergin dil var ama açık taciz değil.
-   - tier 2: açık taciz/hedefli saldırı/aşağılama var.
-
-3) Kısa, tarafsız bir gerekçe yaz. Tek cümle ve Türkçe olsun.
-4) Aynı fikri/eleştiriyi koruyan ama saldırgan kısmı çıkaran bir yeniden yazım öner.
+1) Yorumu Tier 0, Tier 1 veya Tier 2 olarak sınıflandır.
+2) Kısa ve tarafsız bir Türkçe gerekçe yaz.
+3) Tier 1 veya Tier 2 ise aynı temel fikri koruyan fakat saldırgan/nefret içeriğini kaldıran yapıcı bir yeniden yazım öner.
+4) Tier 0 ise rewrite alanında orijinal metni koru.
 
 SADECE aşağıdaki JSON formatında cevap ver.
 Markdown kullanma.
 Başka hiçbir şey yazma.
 
 {"tier":0,"reason":"...","rewrite":"..."}`;
-
 // Moderation prompt - SADECE REWRITE (ML zaten yuksek guvenle karar verdiginde kullanilir)
 function buildRewriteOnlyPrompt(fixedTier) {
-  return `Sen NSosyal platformu için bir içerik moderasyon asistanısın. Sana bir Türkçe yorum ve bu yorum için ZATEN VERİLMİŞ bir tier kararı geliyor.
 
-Tier kararı kesinleşmiştir, sen bunu DEĞİŞTİRMEYECEKSİN: tier ${fixedTier}
+  const tierDescription =
+    fixedTier === 0
+      ? 'normal / zararsız içerik'
+      : fixedTier === 1
+      ? 'kişiye yönelik saldırgan veya aşağılayıcı içerik'
+      : 'bir grup veya kimliğe yönelik nefret söylemi';
 
-Senin tek görevin:
-1) Bu tier kararına uygun, kısa ve tarafsız bir gerekçe yazmak (tek cümle, Türkçe).
-2) Aynı fikri/eleştiriyi koruyan ama saldırgan/aşağılayıcı kısmı çıkaran bir yeniden yazım önermek (tier 0 ise rewrite'ı orijinal metinle aynı bırak).
+  return `Sen NSosyal platformu için bir içerik moderasyon asistanısın.
 
-SADECE aşağıdaki JSON formatında cevap ver, "tier" alanına da tam olarak ${fixedTier} yaz.
-Markdown kullanma. Başka hiçbir şey yazma.
+Bu yorumun sınıflandırması sistem tarafından ZATEN belirlenmiştir.
+
+Kesin karar:
+Tier ${fixedTier} — ${tierDescription}
+
+Bu kararı DEĞİŞTİRME.
+
+Görevin:
+1) Karara uygun, kısa ve tarafsız bir Türkçe gerekçe yaz.
+2) Tier 1 veya Tier 2 ise yorumun temel fikrini koruyarak saldırgan veya nefret içeren kısmı kaldıran yapıcı bir alternatif yaz.
+3) Tier 0 ise rewrite alanında orijinal metni koru.
+
+SADECE aşağıdaki JSON formatında cevap ver.
+"tier" alanına tam olarak ${fixedTier} yaz.
+Markdown kullanma.
+Başka hiçbir şey yazma.
 
 {"tier":${fixedTier},"reason":"...","rewrite":"..."}`;
 }
@@ -87,7 +131,7 @@ Markdown kullanma. Başka hiçbir şey yazma.
 
 app.post('/api/moderate', async (req, res) => {
   try {
-    const { text, isTier3 } = req.body;
+    const { text, isTier3, participant_id  } = req.body;
 
     // 1. Text kontrolü
     if (!text || typeof text !== 'string') {
@@ -336,6 +380,7 @@ const decidedBy = mlIsConfident ? 'ml' : 'llm';
 
 const insert = db.prepare(`
   INSERT INTO moderation_logs (
+    participant_id,
     original_text,
     suggested_rewrite,
     ml_tier,
@@ -343,10 +388,11 @@ const insert = db.prepare(`
     final_tier,
     decided_by
   )
-  VALUES (?, ?, ?, ?, ?, ?)
+  VALUES (?, ?, ?, ?, ?, ?, ?)
 `);
 
 const dbResult = insert.run(
+  participant_id || null,
   text,
   result.rewrite,
   mlResult?.ml_tier ?? null,
