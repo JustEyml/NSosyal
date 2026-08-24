@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="tr">
 
@@ -83,15 +84,21 @@
 
     <div id="participantStart" class="participant-start">
 
+      <label for="participantIdInput" class="sr-only">
+        Participant ID
+      </label>
+
       <input
         type="text"
         id="participantIdInput"
         class="participant-input"
         placeholder="Participant ID (ör. P01)"
         maxlength="10"
+        autocomplete="off"
       >
 
       <button
+        type="button"
         class="post-btn"
         id="startParticipantBtn"
       >
@@ -104,6 +111,7 @@
     <div
       id="participantActive"
       class="participant-active"
+      aria-live="polite"
     >
 
       <span>
@@ -112,6 +120,7 @@
       </span>
 
       <button
+        type="button"
         class="preset-btn"
         id="endParticipantBtn"
       >
@@ -132,35 +141,60 @@
     </div>
 
 
-    <div class="presets">
+    <div class="presets" aria-label="Hazır yorum örnekleri">
 
-      <button class="preset-btn" data-p="0">
+      <button
+        type="button"
+        class="preset-btn"
+        data-p="0"
+      >
         Nötr örnek
       </button>
 
-      <button class="preset-btn" data-p="1">
+      <button
+        type="button"
+        class="preset-btn"
+        data-p="1"
+      >
         Siyasi tartışma → kişisel saldırı
       </button>
 
-      <button class="preset-btn" data-p="2">
+      <button
+        type="button"
+        class="preset-btn"
+        data-p="2"
+      >
         Görünüm/beden üzerinden alay
       </button>
 
-      <button class="preset-btn" data-p="3">
+      <button
+        type="button"
+        class="preset-btn"
+        data-p="3"
+      >
         Küfür içeren mesaj
       </button>
 
-      <button class="preset-btn" data-p="4">
+      <button
+        type="button"
+        class="preset-btn"
+        data-p="4"
+      >
         Çalışana yönelik hakaret
       </button>
 
     </div>
 
 
+    <label for="input" class="sr-only">
+      Yorum
+    </label>
+
     <textarea
       id="input"
       maxlength="400"
       placeholder="Bir gönderiye yorum yaz…"
+      aria-describedby="charCount"
     ></textarea>
 
 
@@ -169,11 +203,13 @@
       <span
         class="char-count"
         id="charCount"
+        aria-live="polite"
       >
         0 / 400
       </span>
 
       <button
+        type="button"
         class="post-btn"
         id="postBtn"
       >
@@ -192,7 +228,10 @@
         risk göstergesi
       </span>
 
-      <div class="gauge-track">
+      <div
+        class="gauge-track"
+        aria-labelledby="gaugeLabel"
+      >
         <div
           class="gauge-fill"
           id="gaugeFill"
@@ -205,6 +244,8 @@
     <div
       class="loading-line"
       id="loadingLine"
+      role="status"
+      aria-live="polite"
     >
       model değerlendiriyor…
     </div>
@@ -215,6 +256,9 @@
     <div
       class="verdict"
       id="verdict"
+      aria-live="polite"
+      aria-atomic="true"
+      tabindex="-1"
     >
 
       <div class="verdict-head">
@@ -255,7 +299,10 @@
             önerilen yeniden yazım
           </div>
 
-          <div id="rewriteText"></div>
+          <div
+            id="rewriteText"
+            aria-live="polite"
+          ></div>
 
         </div>
 
@@ -265,6 +312,7 @@
       <div
         class="verdict-actions"
         id="vActions"
+        aria-label="Moderasyon seçenekleri"
       ></div>
 
     </div>
@@ -278,7 +326,10 @@
     akış
   </div>
 
-  <div id="feed">
+  <div
+    id="feed"
+    aria-live="polite"
+  >
 
     <div class="empty-feed">
       Henüz paylaşım yok. Yukarıdan bir yorum dene.
@@ -293,3 +344,4 @@
 
 </body>
 </html>
+```

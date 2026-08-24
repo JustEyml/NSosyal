@@ -64,7 +64,7 @@ const presets = {
   "4": "Bu mağazadaki o çalışan resmen bir şey işini bile beceremiyor, öyle bir yetersiz ki insan hayrete düşüyor."
 };
 
-document.querySelectorAll('.preset-btn').forEach(btn=>{
+document.querySelectorAll('.preset-btn[data-p]').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     input.value = presets[btn.dataset.p];
     updateCount();
@@ -94,109 +94,212 @@ const participantStart = document.getElementById('participantStart');
 const participantActive = document.getElementById('participantActive');
 const currentParticipant = document.getElementById('currentParticipant');
 
+
 function updateParticipantUI(){
+
   const participantId = sessionStorage.getItem('participant_id');
 
   if(participantId){
+
     participantStart.style.display = 'none';
+
     participantActive.style.display = 'flex';
+
     currentParticipant.textContent = participantId;
+
   } else {
+
     participantStart.style.display = 'flex';
+
     participantActive.style.display = 'none';
+
     currentParticipant.textContent = '';
+
   }
+
 }
 
-startParticipantBtn.addEventListener('click', ()=>{
+
+function startParticipant(){
+
   const participantId = participantIdInput.value.trim().toUpperCase();
 
   if(!participantId){
+
     alert('Lütfen Participant ID girin (ör. P01).');
+
+    participantIdInput.focus();
+
     return;
   }
 
   sessionStorage.setItem('participant_id', participantId);
+
   participantIdInput.value = '';
+
   updateParticipantUI();
+
+  input.focus();
+}
+
+
+startParticipantBtn.addEventListener('click', startParticipant);
+
+
+participantIdInput.addEventListener('keydown', (event)=>{
+
+  if(event.key === 'Enter'){
+
+    event.preventDefault();
+
+    startParticipant();
+  }
+
 });
 
+
 endParticipantBtn.addEventListener('click', ()=>{
+
   sessionStorage.removeItem('participant_id');
+
   resetAll();
+
   updateParticipantUI();
+
+  participantIdInput.focus();
 });
+
 
 updateParticipantUI();
 
 let currentLogId = null;
 
+
 function updateCount(){
+
   charCount.textContent = input.value.length + ' / 400';
 }
 
 input.addEventListener('input', updateCount);
 
+
 function resetGauge(){
+
   gaugeFill.style.width = '0%';
+
   gaugeFill.style.background = 'var(--safe)';
+
   gaugeLabel.textContent = 'risk göstergesi';
 }
 
+
 function setGauge(tier){
+
   const map = {
+
     0:{w:'8%',c:'var(--safe)',l:'güvenli'},
+
     1:{w:'40%',c:'var(--caution)',l:'sınırda'},
+
     2:{w:'72%',c:'var(--friction)',l:'yüksek risk'},
+
     3:{w:'100%',c:'var(--block)',l:'engellendi'}
+
   };
 
   const m = map[tier];
 
   gaugeFill.style.width = m.w;
+
   gaugeFill.style.background = m.c;
+
   gaugeLabel.textContent = m.l;
 }
 
+
 function clearVerdict(){
+
   verdict.className = 'verdict';
+
   vActions.innerHTML = '';
+
   rewriteWrap.style.display = 'none';
+
   document.getElementById('mlInfoLine').textContent = '';
 }
 
+
+// Keyboard accessibility:
+// Moderasyon sonucu açıldığında ilk butona focus verir.
+function focusVerdictAction(){
+
+  requestAnimationFrame(()=>{
+
+    const firstAction = vActions.querySelector('button');
+
+    if(firstAction){
+
+      firstAction.focus();
+
+    } else {
+
+      verdict.focus();
+    }
+
+  });
+
+}
+
+
 function showMlInfo(result){
+
   const el = document.getElementById('mlInfoLine');
 
   if (result.ml_tier === null || result.ml_tier === undefined) {
+
     el.textContent = '';
+
     return;
   }
 
   const isimler = {
+
     0:'temiz',
+
     1:'saldırgan',
+
     2:'nefret'
+
   };
 
   const kimKarar =
+
     result.decided_by === 'ml'
+
       ? 'ML modeli karar verdi'
+
       : 'LLM karar verdi (ML LLM ile desteklendi)';
 
   el.textContent =
+
     `ML tahmini: ${isimler[result.ml_tier]} (%${(result.ml_confidence*100).toFixed(1)} güven) — ${kimKarar}`;
 }
 
+
 function addToFeed(text, tier){
+
   const empty = feed.querySelector('.empty-feed');
 
   if(empty) empty.remove();
 
   const tierNames = {
+
     0:'Tier 0',
+
     1:'Tier 1',
+
     2:'Tier 2'
+
   };
 
   const el = document.createElement('div');
@@ -216,6 +319,7 @@ function addToFeed(text, tier){
   feed.prepend(el);
 }
 
+
 const SYSTEM_PROMPT = `Sen NSosyal platformu için bir içerik moderasyon sınıflandırıcısısın. Sana bir Türkçe yorum verilecek. Görevin:
 1) Yorumun taciz, kişiye yönelik saldırı, beden/görünüm üzerinden aşağılama veya hedefli hakaret içerip içermediğini değerlendirmek.
 2) Bunu üç seviyeden birine atamak:
@@ -228,53 +332,92 @@ const SYSTEM_PROMPT = `Sen NSosyal platformu için bir içerik moderasyon sını
 SADECE şu JSON formatında yanıt ver, başka hiçbir şey yazma, markdown kod bloğu kullanma:
 {"tier": 0, "reason": "...", "rewrite": "..."}`;
 
+
 async function callModel(text, isTier3){
+
   const response = await fetch("http://localhost:3000/api/moderate", {
+
     method: "POST",
+
     headers: {
+
       "Content-Type": "application/json"
+
     },
+
     body: JSON.stringify({
+
       text,
+
       isTier3: !!isTier3,
+
       participant_id: sessionStorage.getItem('participant_id')
+
     })
+
   });
 
   if (!response.ok) {
+
     throw new Error(
+
       "Sunucudan hata döndü: " + response.status
+
     );
   }
 
   return await response.json();
 }
 
+
 async function logUserAction(action, publishedText = null) {
+
   if (!currentLogId) return;
 
   try {
+
     await fetch(
+
       "http://localhost:3000/api/moderation-action",
+
       {
+
         method: "POST",
+
         headers: {
+
           "Content-Type": "application/json"
+
         },
+
         body: JSON.stringify({
+
           log_id: currentLogId,
+
           action: action,
+
           published_text: publishedText
+
         })
+
       }
+
     );
+
   } catch (e) {
+
     console.error(
+
       "Action log kaydedilemedi:",
+
       e
+
     );
+
   }
+
 }
+
 
 function renderVerdict(
   tier,
@@ -283,11 +426,13 @@ function renderVerdict(
   originalText,
   opts
 ){
+
   opts = opts || {};
 
   clearVerdict();
 
   verdict.classList.add('show');
+
 
   if(tier === 3){
 
@@ -304,12 +449,17 @@ function renderVerdict(
       rewrite ? 'block' : 'none';
 
     if(rewrite){
+
       rewriteText.textContent = rewrite;
     }
 
-    if (rewrite) {
+
+    if(rewrite){
+
       const useBtn =
         document.createElement('button');
+
+      useBtn.type = 'button';
 
       useBtn.className =
         'btn btn-primary';
@@ -318,6 +468,7 @@ function renderVerdict(
         'Öneriyi kullan ve paylaş';
 
       useBtn.onclick = async () => {
+
         await logUserAction(
           'rewrite_used',
           rewrite
@@ -326,13 +477,18 @@ function renderVerdict(
         addToFeed(rewrite, 0);
 
         resetAll();
+
+        input.focus();
       };
 
       vActions.appendChild(useBtn);
     }
 
+
     const abandonBtn =
       document.createElement('button');
+
+    abandonBtn.type = 'button';
 
     abandonBtn.className =
       'btn btn-ghost';
@@ -341,16 +497,22 @@ function renderVerdict(
       'Vazgeç';
 
     abandonBtn.onclick = async () => {
+
       await logUserAction(
         'abandoned',
         null
       );
 
       resetAll();
+
+      input.focus();
     };
+
 
     const editBtn =
       document.createElement('button');
+
+    editBtn.type = 'button';
 
     editBtn.className =
       'btn btn-ghost';
@@ -359,17 +521,26 @@ function renderVerdict(
       'Düzenlemeye devam et';
 
     editBtn.onclick = async () => {
+
       await logUserAction(
         'edit_selected'
       );
 
       clearVerdict();
+
       resetGauge();
+
+      input.focus();
     };
 
+
     vActions.appendChild(abandonBtn);
+
     vActions.appendChild(editBtn);
+
+    focusVerdictAction();
   }
+
 
   else if(tier === 2){
 
@@ -387,8 +558,11 @@ function renderVerdict(
 
     rewriteText.textContent = rewrite;
 
+
     const useBtn =
       document.createElement('button');
+
+    useBtn.type = 'button';
 
     useBtn.className =
       'btn btn-primary';
@@ -397,6 +571,7 @@ function renderVerdict(
       'Öneriyi kullan ve paylaş';
 
     useBtn.onclick = async () => {
+
       await logUserAction(
         'rewrite_used',
         rewrite
@@ -405,11 +580,15 @@ function renderVerdict(
       addToFeed(rewrite, 0);
 
       resetAll();
+
+      input.focus();
     };
 
 
     const anywayBtn =
       document.createElement('button');
+
+    anywayBtn.type = 'button';
 
     anywayBtn.className =
       'btn btn-danger-ghost';
@@ -418,6 +597,7 @@ function renderVerdict(
       'Evet, yine de paylaş';
 
     anywayBtn.onclick = async () => {
+
       await logUserAction(
         'original_posted',
         originalText
@@ -426,11 +606,15 @@ function renderVerdict(
       addToFeed(originalText, 2);
 
       resetAll();
+
+      input.focus();
     };
 
 
     const abandonBtn =
       document.createElement('button');
+
+    abandonBtn.type = 'button';
 
     abandonBtn.className =
       'btn btn-ghost';
@@ -439,17 +623,22 @@ function renderVerdict(
       'Vazgeç';
 
     abandonBtn.onclick = async () => {
+
       await logUserAction(
         'abandoned',
         null
       );
 
       resetAll();
+
+      input.focus();
     };
 
 
     const editBtn =
       document.createElement('button');
+
+    editBtn.type = 'button';
 
     editBtn.className =
       'btn btn-ghost';
@@ -458,20 +647,30 @@ function renderVerdict(
       'Düzenle';
 
     editBtn.onclick = async () => {
+
       await logUserAction(
         'edit_selected'
       );
 
       clearVerdict();
+
       resetGauge();
+
+      input.focus();
     };
 
 
     vActions.appendChild(useBtn);
+
     vActions.appendChild(anywayBtn);
+
     vActions.appendChild(abandonBtn);
+
     vActions.appendChild(editBtn);
+
+    focusVerdictAction();
   }
+
 
   else if(tier === 1){
 
@@ -495,6 +694,8 @@ function renderVerdict(
     const useBtn =
       document.createElement('button');
 
+    useBtn.type = 'button';
+
     useBtn.className =
       'btn btn-primary';
 
@@ -502,6 +703,7 @@ function renderVerdict(
       'Öneriyi kullan ve paylaş';
 
     useBtn.onclick = async () => {
+
       await logUserAction(
         'rewrite_used',
         rewrite
@@ -510,11 +712,15 @@ function renderVerdict(
       addToFeed(rewrite, 0);
 
       resetAll();
+
+      input.focus();
     };
 
 
     const anywayBtn =
       document.createElement('button');
+
+    anywayBtn.type = 'button';
 
     anywayBtn.className =
       'btn btn-ghost';
@@ -523,6 +729,7 @@ function renderVerdict(
       'Orijinaliyle paylaş';
 
     anywayBtn.onclick = async () => {
+
       await logUserAction(
         'original_posted',
         originalText
@@ -531,11 +738,15 @@ function renderVerdict(
       addToFeed(originalText, 1);
 
       resetAll();
+
+      input.focus();
     };
 
 
     const abandonBtn =
       document.createElement('button');
+
+    abandonBtn.type = 'button';
 
     abandonBtn.className =
       'btn btn-ghost';
@@ -544,17 +755,22 @@ function renderVerdict(
       'Vazgeç';
 
     abandonBtn.onclick = async () => {
+
       await logUserAction(
         'abandoned',
         null
       );
 
       resetAll();
+
+      input.focus();
     };
 
 
     const editBtn =
       document.createElement('button');
+
+    editBtn.type = 'button';
 
     editBtn.className =
       'btn btn-ghost';
@@ -563,23 +779,35 @@ function renderVerdict(
       'Düzenle';
 
     editBtn.onclick = async () => {
+
       await logUserAction(
         'edit_selected'
       );
 
       clearVerdict();
+
       resetGauge();
+
+      input.focus();
     };
 
 
     vActions.appendChild(useBtn);
+
     vActions.appendChild(anywayBtn);
+
     vActions.appendChild(abandonBtn);
+
     vActions.appendChild(editBtn);
+
+    focusVerdictAction();
   }
+
 }
 
+
 function resetAll(){
+
   input.value = '';
 
   updateCount();
@@ -603,7 +831,9 @@ postBtn.addEventListener('click', async ()=>{
   const participantId =
     sessionStorage.getItem('participant_id');
 
+
   if(!participantId){
+
     alert(
       'Önce Participant ID girerek testi başlatın.'
     );
@@ -616,7 +846,13 @@ postBtn.addEventListener('click', async ()=>{
 
   const text = input.value.trim();
 
-  if(!text) return;
+
+  if(!text){
+
+    input.focus();
+
+    return;
+  }
 
 
   clearVerdict();
@@ -639,6 +875,7 @@ postBtn.addEventListener('click', async ()=>{
 
     loadingLine.textContent =
       'engellendi — alternatif ifade öneriliyor…';
+
 
     try{
 
@@ -669,6 +906,7 @@ postBtn.addEventListener('click', async ()=>{
         null,
         text
       );
+
     }
 
     return;
@@ -676,6 +914,7 @@ postBtn.addEventListener('click', async ()=>{
 
 
   // Tier 0–2 — model call
+
   loadingLine.style.display = 'block';
 
   loadingLine.textContent =
@@ -715,6 +954,8 @@ postBtn.addEventListener('click', async ()=>{
 
       resetAll();
 
+      input.focus();
+
     } else {
 
       renderVerdict(
@@ -726,6 +967,7 @@ postBtn.addEventListener('click', async ()=>{
 
       showMlInfo(result);
     }
+
 
   }catch(e){
 
@@ -745,8 +987,12 @@ postBtn.addEventListener('click', async ()=>{
       'model çağrısı başarısız oldu, tekrar dene.';
 
     setTimeout(()=>{
+
       loadingLine.style.display =
         'none';
+
     },2500);
+
   }
+
 });
