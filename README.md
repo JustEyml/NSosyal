@@ -68,9 +68,7 @@ This structure allows moderation friction to increase according to the detected 
 
 ## Hybrid Moderation Architecture
 
-NSosyal does not depend on a single moderation mechanism.
-
-The current prototype combines three complementary layers:
+NSosyal does not depend on a single moderation mechanism. The current prototype combines three complementary layers.
 
 ### 1. Rule-Based Detection
 
@@ -194,7 +192,7 @@ SQLite Behavioral Logging
 
 ## Frontend Architecture
 
-The frontend follows a separation-of-concerns structure.
+The frontend follows a separation-of-concerns structure:
 
 ```text
 frontend/
@@ -217,37 +215,54 @@ This structure keeps interface structure, presentation, and interaction logic in
 NSosyal/
 │
 ├── backend/
-│   ├── server.js
 │   ├── db.js
 │   ├── ml_api.py
-│   └── nsosyal.db
-│
-├── frontend/
-│   ├── index.html
-│   ├── style.css
-│   └── app.js
-│
-├── model/
-│   ├── toxicity_model.pkl
-│   └── tfidf_vectorizer.pkl
+│   ├── nsosyal.db
+│   └── server.js
 │
 ├── data/
-│   └── processed dataset resources
+│   ├── Processed/
+│   └── Raw/
 │
+├── frontend/
+│   ├── app.js
+│   ├── index.html
+│   └── style.css
+│
+├── model/
+│   ├── build_dataset.py
+│   ├── metrics.json
+│   ├── tfidf_vectorizer.pkl
+│   ├── toxicity_model.pkl
+│   └── train_classifier.py
+│
+├── export_db.js
 ├── .env.example
 ├── .gitignore
+├── package-lock.json
 ├── package.json
-├── requirements.txt
-└── README.md
+├── README.md
+└── requirements.txt
 ```
 
-> Note: The exact contents of ignored local/runtime files may differ between development environments.
+### Directory Responsibilities
+
+- `backend/` contains the Node.js application server, SQLite integration, and Python ML inference API.
+- `data/Raw/` contains the original source datasets used during model development.
+- `data/Processed/` contains cleaned, consolidated, or transformed datasets.
+- `frontend/` contains the modular user interface and client-side interaction logic.
+- `model/` contains dataset preparation scripts, model training code, evaluation metrics, and trained ML artifacts.
+- `export_db.js` supports the export of prototype moderation logs for behavioral analysis.
+
+Local runtime files such as `.env`, `node_modules/`, SQLite WAL/SHM files, and exported testing data are not required as part of the source-code repository.
 
 ---
 
 ## Dataset and Model Development
 
-The machine-learning dataset was constructed from multiple Turkish offensive-language and moderation resources, including processed combinations of:
+The machine-learning pipeline is maintained primarily under the `model/` directory, while datasets are separated into raw and processed resources.
+
+The development dataset was constructed from multiple Turkish offensive-language and moderation resources, including processed combinations of:
 
 - imayda-1;
 - imayda-2;
@@ -255,27 +270,34 @@ The machine-learning dataset was constructed from multiple Turkish offensive-lan
 
 The combined development dataset contained approximately **52,000 labeled samples**.
 
-The preparation pipeline included:
+The development workflow follows the structure:
 
 ```text
-Raw Datasets
-     ↓
-Dataset Consolidation
-     ↓
-Label Harmonization
-     ↓
-Text Cleaning
-     ↓
-Train / Test Preparation
-     ↓
+data/Raw/
+     │
+     ▼
+model/build_dataset.py
+     │
+     ▼
+data/Processed/
+     │
+     ▼
+model/train_classifier.py
+     │
+     ▼
 TF-IDF Vectorization
-     ↓
+     │
+     ▼
 Logistic Regression
-     ↓
-Model Evaluation
+     │
+     ├──► toxicity_model.pkl
+     ├──► tfidf_vectorizer.pkl
+     └──► metrics.json
 ```
 
-The model was evaluated using classification metrics including:
+Dataset preparation includes consolidation, label harmonization, text preprocessing, and preparation for model training.
+
+The model is evaluated using classification metrics including:
 
 - Accuracy
 - Precision
@@ -289,15 +311,15 @@ The selected model achieved approximately **82% overall accuracy** during intern
 
 ## Why Hybrid Moderation?
 
-Prototype testing demonstrated that statistical confidence alone does not always guarantee correct contextual interpretation.
+Prototype development demonstrated that statistical confidence alone does not always guarantee correct contextual interpretation.
 
-For example, some context-dependent or group-directed harmful statements may appear lexically safe to a lightweight classifier while still carrying harmful meaning.
+Some context-dependent or group-directed harmful statements may appear lexically safe to a lightweight classifier while still carrying harmful meaning.
 
-For this reason, NSosyal treats classical ML as an important moderation signal while complementing it with contextual analysis.
+For this reason, NSosyal treats classical ML as an important moderation signal while complementing it with contextual analysis and deterministic detection for explicit expressions.
 
-This architecture aims to combine:
+The architecture therefore aims to combine:
 
-**ML speed + deterministic safety checks + contextual understanding**
+> **ML speed + deterministic safety checks + contextual understanding**
 
 ---
 
@@ -307,7 +329,7 @@ NSosyal is designed around **progressive intervention**.
 
 Instead of presenting every user with the same warning, the interface increases moderation friction according to the assigned tier.
 
-The intervention experience may provide:
+Depending on the moderation decision, the intervention experience may provide:
 
 - a risk indication;
 - a short explanation;
@@ -323,7 +345,7 @@ This preserves user agency wherever possible while introducing additional reflec
 
 ## Behavioral Prototype Evaluation
 
-NSosyal was also evaluated at the interaction level.
+NSosyal was evaluated at the interaction level to explore how users respond after receiving a moderation intervention.
 
 After removing development/debug and incomplete records, **35 valid prototype interactions** were analyzed.
 
@@ -348,15 +370,15 @@ Behavioral Intervention Result
 
 In **64.3% of intervention-triggering interactions**, the original harmful formulation was not published.
 
-These findings represent **exploratory prototype-level behavioral evidence** and should not be interpreted as population-level conclusions.
+The evaluation focuses on observable behavior rather than only self-reported intention: the prototype records what action occurs after an intervention is presented.
 
-Future evaluation will include larger and more diverse participant groups.
+These findings represent **exploratory prototype-level behavioral evidence** and should not be interpreted as population-level conclusions. Future evaluation will require larger and more diverse participant groups.
 
 ---
 
 ## Behavioral Logging
 
-Moderation events are stored in SQLite.
+Moderation events are stored using SQLite.
 
 Recorded information can include:
 
@@ -394,31 +416,27 @@ git clone https://github.com/JustEyml/NSosyal.git
 cd NSosyal
 ```
 
----
-
 ### 2. Install Node.js Dependencies
 
 ```bash
 npm install
 ```
 
----
-
 ### 3. Install Python Dependencies
 
-Create a virtual environment if preferred:
+Create a virtual environment:
 
 ```bash
 python -m venv venv
 ```
 
-Windows:
+On Windows:
 
 ```bash
 .\venv\Scripts\activate
 ```
 
-macOS / Linux:
+On macOS/Linux:
 
 ```bash
 source venv/bin/activate
@@ -430,19 +448,15 @@ Install the required Python packages:
 pip install -r requirements.txt
 ```
 
----
-
 ### 4. Configure Environment Variables
 
-Create your local `.env` file using `.env.example` as reference.
+Create a local `.env` file using `.env.example` as the reference:
 
 ```text
 .env.example → .env
 ```
 
-API credentials must remain in the local `.env` file and **must not be committed to GitHub**.
-
----
+API credentials must remain in the local `.env` file and **must never be committed to the public repository**.
 
 ### 5. Start the ML API
 
@@ -452,47 +466,43 @@ From the repository root:
 python backend/ml_api.py
 ```
 
-The ML API should start locally on:
+The ML API runs locally on:
 
 ```text
 http://localhost:5000
 ```
 
-A health endpoint is available at:
+Health check:
 
 ```text
 GET /health
 ```
 
----
-
 ### 6. Start the Node.js Backend
 
-Open another terminal and run:
+Open a second terminal and run:
 
 ```bash
 node backend/server.js
 ```
 
-The application server should start on:
+The application server runs locally on:
 
 ```text
 http://localhost:3000
 ```
 
----
-
 ### 7. Open the Prototype
 
-Open the frontend through the project server according to the configured Express static-file setup.
+Open the application through the local Node.js server.
 
-The browser interface communicates with the Node.js backend, which coordinates the ML API, contextual moderation layer, database, and final moderation response.
+The browser interface communicates with the Node.js backend, which coordinates the rule-based detection mechanism, Python ML service, contextual moderation layer, database, and final user-facing moderation response.
 
 ---
 
 ## API Communication
 
-The frontend sends moderation requests to:
+The frontend sends moderation requests to the Node.js backend:
 
 ```text
 POST /api/moderate
@@ -504,9 +514,9 @@ The Node.js backend communicates with the Python ML service:
 POST http://localhost:5000/predict
 ```
 
-User decisions following an intervention are recorded through the backend action endpoint.
+User decisions following an intervention are also recorded through the backend.
 
-This separation allows the ML service, backend application, frontend, and persistent storage layers to operate as independent components.
+This separation allows the frontend, backend application, ML service, contextual moderation component, and persistent storage layers to operate as modular components.
 
 ---
 
@@ -518,13 +528,13 @@ Important limitations remain:
 
 - ML predictions may contain false positives or false negatives.
 - Contextual AI output may vary.
-- Language evolves over time.
-- Harmful expressions may be implicit or culturally dependent.
-- Rule-based lists require maintenance.
+- Language and harmful-expression patterns evolve over time.
+- Harmful meaning may be implicit or culturally dependent.
+- Rule-based lists require continuous maintenance.
 - User behavior may change after repeated exposure to interventions.
 - Prototype-scale behavioral results require larger-scale validation.
 
-For these reasons, the system uses multiple signals and is designed for continuous evaluation and improvement.
+For these reasons, the system combines multiple moderation signals and is designed for continuous evaluation and improvement.
 
 ---
 
@@ -538,7 +548,7 @@ Planned development areas include:
 - multilingual moderation;
 - larger-scale usability testing;
 - accessibility evaluation;
-- false-positive analysis;
+- false-positive and false-negative analysis;
 - intervention-fatigue measurement;
 - model monitoring;
 - scalable database infrastructure;
@@ -549,9 +559,9 @@ Planned development areas include:
 
 ## Project Status
 
-**Current Stage:** Working Prototype
+**Current Stage: Working Prototype**
 
-The current system demonstrates:
+The current prototype demonstrates:
 
 - functioning ML inference;
 - hybrid moderation logic;
@@ -563,12 +573,6 @@ The current system demonstrates:
 - SQLite persistence;
 - modular frontend architecture;
 - prototype behavioral evaluation.
-
----
-
-## Repository
-
-**GitHub:** https://github.com/JustEyml/NSosyal
 
 ---
 
